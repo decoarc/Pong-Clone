@@ -1,24 +1,22 @@
 # Pong-Clone
 
-Jogo Pong implementado em C++ usando Win32 API.
+Pong game implemented in C++ using Win32 API.
 
 ## Screenshots
 
-![Menu Inicial](screenshots/1.png)
+![Home Menu](screenshots/1.png)
 
-![Jogo em Execução](screenshots/2.png)
+![Game in progress](screenshots/2.png)
 
-## Compilação e Execução
+## Compile & execute
 
-Para compilar o projeto (janela Win32):
+To compile the project:
 
 ```bash
 g++ -std=c++11 -o pong.exe main.cpp game_logic.cpp renderer.cpp window.cpp audio.cpp menu.cpp -lgdi32 -luser32 -lwinmm
 ```
 
-O flag `-mwindows` remove a janela de console e cria uma aplicação Win32.
-
-Para executar:
+to execute:
 
 ```bash
 .\pong.exe
