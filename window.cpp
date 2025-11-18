@@ -12,7 +12,6 @@ namespace Window {
   LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
       case WM_CREATE:
-        // Timer será iniciado quando o jogo começar
         return 0;
 
       case WM_TIMER:
@@ -28,20 +27,16 @@ namespace Window {
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hwnd, &ps);
         
-        // Double buffering para evitar flickering
         RECT rect;
         GetClientRect(hwnd, &rect);
         HDC hdcMem = CreateCompatibleDC(hdc);
         HBITMAP hbmMem = CreateCompatibleBitmap(hdc, rect.right, rect.bottom);
         HBITMAP hbmOld = (HBITMAP)SelectObject(hdcMem, hbmMem);
         
-        // Desenhar no bitmap em memória (menu ou jogo)
         Renderer::draw(hdcMem, hwnd, *g_gameState);
         
-        // Copiar tudo de uma vez para a tela
         BitBlt(hdc, 0, 0, rect.right, rect.bottom, hdcMem, 0, 0, SRCCOPY);
         
-        // Cleanup
         SelectObject(hdcMem, hbmOld);
         DeleteObject(hbmMem);
         DeleteDC(hdcMem);
@@ -52,15 +47,12 @@ namespace Window {
 
       case WM_KEYDOWN:
         if (g_gameState->mode == GameMode::MENU) {
-          // Handle menu navigation
           Menu::handleKeyDown(wParam, *g_gameState, hwnd);
           
-          // Iniciar timer quando o jogo começar
           if (g_gameState->mode == GameMode::PLAYING) {
             SetTimer(hwnd, *g_timerId, g_gameState->frameDelayMs, nullptr);
           }
         } else {
-          // Handle game controls
           switch (wParam) {
             case 'W':
             case 'w':
@@ -94,7 +86,6 @@ namespace Window {
               SetTimer(hwnd, *g_timerId, g_gameState->frameDelayMs, nullptr);
               break;
             case VK_ESCAPE:
-              // Voltar ao menu
               KillTimer(hwnd, *g_timerId);
               g_gameState->mode = GameMode::MENU;
               InvalidateRect(hwnd, nullptr, FALSE);
@@ -131,7 +122,6 @@ namespace Window {
           if (!Menu::handleClick(x, y, *g_gameState)) {
             PostMessage(hwnd, WM_CLOSE, 0, 0);
           } else {
-            // Iniciar timer quando o jogo começar
             if (g_gameState->mode == GameMode::PLAYING) {
               SetTimer(hwnd, *g_timerId, g_gameState->frameDelayMs, nullptr);
             }
@@ -156,7 +146,6 @@ namespace Window {
     g_gameState = &game;
     g_timerId = &timerId;
 
-    // Register window class
     const char CLASS_NAME[] = "PongWindowClass";
     
     WNDCLASSA wc = {};
@@ -168,13 +157,10 @@ namespace Window {
 
     RegisterClassA(&wc);
 
-    // Calculate window size with title bar
     RECT windowRect = {0, 0, Constants::kWindowWidth, Constants::kWindowHeight};
     AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX, FALSE);
     int windowWidth = windowRect.right - windowRect.left;
     int windowHeight = windowRect.bottom - windowRect.top;
-
-    // Create window
     HWND hwnd = CreateWindowExA(
       0,
       CLASS_NAME,

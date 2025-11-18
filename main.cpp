@@ -12,7 +12,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     return 0;
   }
 
-  // Message loop
   MSG msg = {};
   while (GetMessage(&msg, nullptr, 0, 0)) {
     TranslateMessage(&msg);

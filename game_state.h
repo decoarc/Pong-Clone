@@ -17,7 +17,6 @@ struct GameState {
   GameMode mode = GameMode::MENU;
   MenuOption selectedMenuOption = MenuOption::START;
   
-  // Posição inicial dos paddles (centralizado na área de jogo, considerando offsets)
   int leftPaddleY = (Constants::kTopOffset + 1 + Constants::kGameHeight - Constants::kBottomOffset - Constants::kPaddleHeight) / 2;
   int rightPaddleY = (Constants::kTopOffset + 1 + Constants::kGameHeight - Constants::kBottomOffset - Constants::kPaddleHeight) / 2;
   int ballX = Constants::kGameWidth / 2;

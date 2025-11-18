@@ -20,9 +20,7 @@ namespace Audio {
     }
     
     if (soundFile) {
-      // Tenta tocar arquivo WAV, se não encontrar usa som do sistema como fallback
       if (PlaySoundA(soundFile, nullptr, SND_FILENAME | SND_ASYNC | SND_NODEFAULT) == FALSE) {
-        // Fallback para sons do sistema se arquivo não existir
         UINT systemSound = 0;
         switch (type) {
           case SoundType::PADDLE_HIT:
@@ -43,11 +41,9 @@ namespace Audio {
   }
 
   void initialize() {
-    // Inicialização se necessário no futuro
   }
 
   void cleanup() {
-    // Cleanup se necessário no futuro
   }
 }
 

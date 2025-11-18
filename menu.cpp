@@ -9,15 +9,12 @@ namespace Menu {
   constexpr int kMenuOptionHeight = 50;
 
   void drawMenu(HDC hdc, HWND hwnd, const GameState& game) {
-    // Fill background (black)
     RECT rect;
     GetClientRect(hwnd, &rect);
     FillRect(hdc, &rect, (HBRUSH)GetStockObject(BLACK_BRUSH));
 
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, RGB(255, 255, 255));
-
-    // Título
     HFONT hFontTitle = CreateFontA(
         72, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
         DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
@@ -35,7 +32,6 @@ namespace Menu {
     SelectObject(hdc, hOldFont);
     DeleteObject(hFontTitle);
 
-    // Opções do menu (negrito e maior)
     HFONT hFontMenu = CreateFontA(
         48, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
         DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
@@ -43,10 +39,9 @@ namespace Menu {
     );
     SelectObject(hdc, hFontMenu);
 
-    // Opção START
     int startY = kMenuStartY;
     bool startSelected = (game.selectedMenuOption == MenuOption::START);
-    SetTextColor(hdc, startSelected ? RGB(0, 255, 255) : RGB(255, 255, 255)); // Ciano quando selecionado
+    SetTextColor(hdc, startSelected ? RGB(0, 255, 255) : RGB(255, 255, 255));
     
     std::string startText = "START";
     SIZE startSize;
@@ -54,10 +49,9 @@ namespace Menu {
     int startX = (Constants::kWindowWidth - startSize.cx) / 2;
     TextOutA(hdc, startX, startY, startText.c_str(), static_cast<int>(startText.length()));
 
-    // Opção QUIT
     int quitY = kMenuStartY + kMenuOptionSpacing;
     bool quitSelected = (game.selectedMenuOption == MenuOption::QUIT);
-    SetTextColor(hdc, quitSelected ? RGB(0, 255, 255) : RGB(255, 255, 255)); // Ciano quando selecionado
+    SetTextColor(hdc, quitSelected ? RGB(0, 255, 255) : RGB(255, 255, 255));
     
     std::string quitText = "QUIT";
     SIZE quitSize;
@@ -65,7 +59,6 @@ namespace Menu {
     int quitX = (Constants::kWindowWidth - quitSize.cx) / 2;
     TextOutA(hdc, quitX, quitY, quitText.c_str(), static_cast<int>(quitText.length()));
 
-    // Instruções
     HFONT hFontSmall = CreateFontA(
         16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
         DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
@@ -92,7 +85,6 @@ namespace Menu {
     int centerX = Constants::kWindowWidth / 2;
     int halfWidth = kMenuOptionWidth / 2;
 
-    // Verificar clique em START
     if (y >= startY && y <= startY + kMenuOptionHeight) {
       if (x >= centerX - halfWidth && x <= centerX + halfWidth) {
         game.mode = GameMode::PLAYING;
@@ -100,14 +92,13 @@ namespace Menu {
       }
     }
 
-    // Verificar clique em QUIT
     if (y >= quitY && y <= quitY + kMenuOptionHeight) {
       if (x >= centerX - halfWidth && x <= centerX + halfWidth) {
-        return false; // Retorna false para fechar a janela
+        return false;
       }
     }
 
-    return true; // Continua no menu
+    return true;
   }
 
   void handleKeyDown(WPARAM wParam, GameState& game, HWND hwnd) {
