@@ -4,9 +4,9 @@ Jogo Pong implementado em C++ usando Win32 API.
 
 ## Screenshots
 
-![Menu Inicial](old/1.png)
+![Menu Inicial](screenshots/1.png)
 
-![Jogo em Execução](old/2.png)
+![Jogo em Execução](screenshots/2.png)
 
 ## Compilação e Execução
 
