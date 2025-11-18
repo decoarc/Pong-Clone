@@ -6,6 +6,7 @@
 
 namespace Renderer {
   void drawGame(HDC hdc, HWND hwnd, const GameState& game);
+  void draw(HDC hdc, HWND hwnd, const GameState& game);
 }
 
 #endif

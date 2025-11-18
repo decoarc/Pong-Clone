@@ -3,7 +3,20 @@
 
 #include "constants.h"
 
+enum class GameMode {
+  MENU,
+  PLAYING
+};
+
+enum class MenuOption {
+  START,
+  QUIT
+};
+
 struct GameState {
+  GameMode mode = GameMode::MENU;
+  MenuOption selectedMenuOption = MenuOption::START;
+  
   int leftPaddleY = (Constants::kGameHeight - Constants::kPaddleHeight) / 2;
   int rightPaddleY = (Constants::kGameHeight - Constants::kPaddleHeight) / 2;
   int ballX = Constants::kGameWidth / 2;

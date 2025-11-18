@@ -1,5 +1,6 @@
 #include "renderer.h"
 #include "constants.h"
+#include "menu.h"
 #include <string>
 
 namespace Renderer {
@@ -118,6 +119,14 @@ namespace Renderer {
     // Cleanup
     SelectObject(hdc, oldBrush);
     DeleteObject(whiteBrush);
+  }
+
+  void draw(HDC hdc, HWND hwnd, const GameState& game) {
+    if (game.mode == GameMode::MENU) {
+      Menu::drawMenu(hdc, hwnd, game);
+    } else {
+      drawGame(hdc, hwnd, game);
+    }
   }
 }
 

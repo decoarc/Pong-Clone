@@ -2,6 +2,7 @@
 #include "constants.h"
 #include "game_logic.h"
 #include "renderer.h"
+#include "menu.h"
 #include <algorithm>
 
 namespace Window {
@@ -11,14 +12,15 @@ namespace Window {
   LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
       case WM_CREATE:
-        // Start timer for game loop
-        SetTimer(hwnd, *g_timerId, g_gameState->frameDelayMs, nullptr);
+        // Timer será iniciado quando o jogo começar
         return 0;
 
       case WM_TIMER:
         if (wParam == *g_timerId) {
-          GameLogic::updateGame(*g_gameState);
-          InvalidateRect(hwnd, nullptr, FALSE);
+          if (g_gameState->mode == GameMode::PLAYING) {
+            GameLogic::updateGame(*g_gameState);
+            InvalidateRect(hwnd, nullptr, FALSE);
+          }
         }
         return 0;
 
@@ -33,8 +35,8 @@ namespace Window {
         HBITMAP hbmMem = CreateCompatibleBitmap(hdc, rect.right, rect.bottom);
         HBITMAP hbmOld = (HBITMAP)SelectObject(hdcMem, hbmMem);
         
-        // Desenhar no bitmap em memória
-        Renderer::drawGame(hdcMem, hwnd, *g_gameState);
+        // Desenhar no bitmap em memória (menu ou jogo)
+        Renderer::draw(hdcMem, hwnd, *g_gameState);
         
         // Copiar tudo de uma vez para a tela
         BitBlt(hdc, 0, 0, rect.right, rect.bottom, hdcMem, 0, 0, SRCCOPY);
@@ -49,60 +51,92 @@ namespace Window {
       }
 
       case WM_KEYDOWN:
-        switch (wParam) {
-          case 'W':
-          case 'w':
-            g_gameState->leftPaddleUp = true;
-            break;
-          case 'S':
-          case 's':
-            g_gameState->leftPaddleDown = true;
-            break;
-          case VK_UP:
-            g_gameState->rightPaddleUp = true;
-            break;
-          case VK_DOWN:
-            g_gameState->rightPaddleDown = true;
-            break;
-          case 'P':
-          case 'p':
-            g_gameState->paused = !g_gameState->paused;
-            InvalidateRect(hwnd, nullptr, FALSE);
-            break;
-          case VK_OEM_PLUS:
-          case VK_ADD:
-            g_gameState->frameDelayMs = std::max(1, g_gameState->frameDelayMs - 1);
-            KillTimer(hwnd, *g_timerId);
+        if (g_gameState->mode == GameMode::MENU) {
+          // Handle menu navigation
+          Menu::handleKeyDown(wParam, *g_gameState, hwnd);
+          
+          // Iniciar timer quando o jogo começar
+          if (g_gameState->mode == GameMode::PLAYING) {
             SetTimer(hwnd, *g_timerId, g_gameState->frameDelayMs, nullptr);
-            break;
-          case VK_OEM_MINUS:
-          case VK_SUBTRACT:
-            g_gameState->frameDelayMs = std::min(100, g_gameState->frameDelayMs + 1);
-            KillTimer(hwnd, *g_timerId);
-            SetTimer(hwnd, *g_timerId, g_gameState->frameDelayMs, nullptr);
-            break;
-          case VK_ESCAPE:
-            PostMessage(hwnd, WM_CLOSE, 0, 0);
-            break;
+          }
+        } else {
+          // Handle game controls
+          switch (wParam) {
+            case 'W':
+            case 'w':
+              g_gameState->leftPaddleUp = true;
+              break;
+            case 'S':
+            case 's':
+              g_gameState->leftPaddleDown = true;
+              break;
+            case VK_UP:
+              g_gameState->rightPaddleUp = true;
+              break;
+            case VK_DOWN:
+              g_gameState->rightPaddleDown = true;
+              break;
+            case 'P':
+            case 'p':
+              g_gameState->paused = !g_gameState->paused;
+              InvalidateRect(hwnd, nullptr, FALSE);
+              break;
+            case VK_OEM_PLUS:
+            case VK_ADD:
+              g_gameState->frameDelayMs = std::max(1, g_gameState->frameDelayMs - 1);
+              KillTimer(hwnd, *g_timerId);
+              SetTimer(hwnd, *g_timerId, g_gameState->frameDelayMs, nullptr);
+              break;
+            case VK_OEM_MINUS:
+            case VK_SUBTRACT:
+              g_gameState->frameDelayMs = std::min(100, g_gameState->frameDelayMs + 1);
+              KillTimer(hwnd, *g_timerId);
+              SetTimer(hwnd, *g_timerId, g_gameState->frameDelayMs, nullptr);
+              break;
+            case VK_ESCAPE:
+              // Voltar ao menu
+              KillTimer(hwnd, *g_timerId);
+              g_gameState->mode = GameMode::MENU;
+              InvalidateRect(hwnd, nullptr, FALSE);
+              break;
+          }
         }
         return 0;
 
       case WM_KEYUP:
-        switch (wParam) {
-          case 'W':
-          case 'w':
-            g_gameState->leftPaddleUp = false;
-            break;
-          case 'S':
-          case 's':
-            g_gameState->leftPaddleDown = false;
-            break;
-          case VK_UP:
-            g_gameState->rightPaddleUp = false;
-            break;
-          case VK_DOWN:
-            g_gameState->rightPaddleDown = false;
-            break;
+        if (g_gameState->mode == GameMode::PLAYING) {
+          switch (wParam) {
+            case 'W':
+            case 'w':
+              g_gameState->leftPaddleUp = false;
+              break;
+            case 'S':
+            case 's':
+              g_gameState->leftPaddleDown = false;
+              break;
+            case VK_UP:
+              g_gameState->rightPaddleUp = false;
+              break;
+            case VK_DOWN:
+              g_gameState->rightPaddleDown = false;
+              break;
+          }
+        }
+        return 0;
+
+      case WM_LBUTTONDOWN:
+        if (g_gameState->mode == GameMode::MENU) {
+          int x = LOWORD(lParam);
+          int y = HIWORD(lParam);
+          if (!Menu::handleClick(x, y, *g_gameState)) {
+            PostMessage(hwnd, WM_CLOSE, 0, 0);
+          } else {
+            // Iniciar timer quando o jogo começar
+            if (g_gameState->mode == GameMode::PLAYING) {
+              SetTimer(hwnd, *g_timerId, g_gameState->frameDelayMs, nullptr);
+            }
+            InvalidateRect(hwnd, nullptr, FALSE);
+          }
         }
         return 0;
 
