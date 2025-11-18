@@ -1,5 +1,6 @@
 #include "game_logic.h"
 #include "constants.h"
+#include "audio.h"
 #include <algorithm>
 #include <cstdlib>
 
@@ -36,9 +37,11 @@ namespace GameLogic {
     if (game.ballY <= Constants::kTopOffset + 1) {
       game.ballY = Constants::kTopOffset + 1;
       game.ballDY = 1;
+      Audio::playSound(Audio::SoundType::WALL_HIT);
     } else if (game.ballY >= Constants::kGameHeight - Constants::kBottomOffset - 2) {
       game.ballY = Constants::kGameHeight - Constants::kBottomOffset - 2;
       game.ballDY = -1;
+      Audio::playSound(Audio::SoundType::WALL_HIT);
     }
 
     // Left paddle collision
@@ -50,6 +53,7 @@ namespace GameLogic {
         int hitPos = game.ballY - game.leftPaddleY; // 0..kPaddleHeight-1
         if (hitPos < Constants::kPaddleHeight / 2) game.ballDY = -1;
         else if (hitPos > Constants::kPaddleHeight / 2) game.ballDY = 1;
+        Audio::playSound(Audio::SoundType::PADDLE_HIT);
       }
     }
 
@@ -62,6 +66,7 @@ namespace GameLogic {
         int hitPos = game.ballY - game.rightPaddleY;
         if (hitPos < Constants::kPaddleHeight / 2) game.ballDY = -1;
         else if (hitPos > Constants::kPaddleHeight / 2) game.ballDY = 1;
+        Audio::playSound(Audio::SoundType::PADDLE_HIT);
       }
     }
 
@@ -69,9 +74,11 @@ namespace GameLogic {
     if (game.ballX <= 0) {
       game.rightScore += 1;
       resetBall(game, -1);
+      Audio::playSound(Audio::SoundType::SCORE);
     } else if (game.ballX >= Constants::kGameWidth - 1) {
       game.leftScore += 1;
       resetBall(game, 1);
+      Audio::playSound(Audio::SoundType::SCORE);
     }
   }
 }
