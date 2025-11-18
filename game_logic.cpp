@@ -26,8 +26,11 @@ namespace GameLogic {
     if (game.rightPaddleUp) game.rightPaddleY -= 1;
     if (game.rightPaddleDown) game.rightPaddleY += 1;
 
-    clamp(game.leftPaddleY, 1, Constants::kGameHeight - Constants::kPaddleHeight - 1);
-    clamp(game.rightPaddleY, 1, Constants::kGameHeight - Constants::kPaddleHeight - 1);
+    // Limitar paddles considerando os offsets do teto e chão
+    int minPaddleY = Constants::kTopOffset + 1; // Logo abaixo do teto
+    int maxPaddleY = Constants::kGameHeight - Constants::kBottomOffset - Constants::kPaddleHeight - 1; // Acima do chão
+    clamp(game.leftPaddleY, minPaddleY, maxPaddleY);
+    clamp(game.rightPaddleY, minPaddleY, maxPaddleY);
 
     // Update ball
     game.ballX += game.ballDX;
