@@ -9,13 +9,15 @@ enum class GameMode {
 };
 
 enum class MenuOption {
-  START,
+  MULTIPLAYER,
+  SINGLEPLAYER,
   QUIT
 };
 
 struct GameState {
   GameMode mode = GameMode::MENU;
-  MenuOption selectedMenuOption = MenuOption::START;
+  MenuOption selectedMenuOption = MenuOption::SINGLEPLAYER;
+  bool isSinglePlayer = false;
   
   int leftPaddleY = (Constants::kTopOffset + 1 + Constants::kGameHeight - Constants::kBottomOffset - Constants::kPaddleHeight) / 2;
   int rightPaddleY = (Constants::kTopOffset + 1 + Constants::kGameHeight - Constants::kBottomOffset - Constants::kPaddleHeight) / 2;

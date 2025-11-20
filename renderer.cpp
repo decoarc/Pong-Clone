@@ -74,7 +74,9 @@ namespace Renderer {
     );
     SelectObject(hdc, hFontSmall);
     
-    std::string hud = "  W/S=Left  Up/Down=Right  P=Pause  +/-=Speed  ESC=Quit  ";
+    std::string hud = game.isSinglePlayer 
+      ? "  W/S=Move  P=Pause  +/-=Speed  ESC=Quit  "
+      : "  W/S=Left  Up/Down=Right  P=Pause  +/-=Speed  ESC=Quit  ";
     TextOutA(hdc, 10, 5, hud.c_str(), static_cast<int>(hud.length()));
     
     if (game.paused) {

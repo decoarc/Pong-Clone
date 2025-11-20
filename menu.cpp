@@ -3,9 +3,9 @@
 #include <string>
 
 namespace Menu {
-  constexpr int kMenuStartY = 250;
-  constexpr int kMenuOptionSpacing = 80;
-  constexpr int kMenuOptionWidth = 200;
+  constexpr int kMenuStartY = 200;
+  constexpr int kMenuOptionSpacing = 70;
+  constexpr int kMenuOptionWidth = 300;
   constexpr int kMenuOptionHeight = 50;
 
   void drawMenu(HDC hdc, HWND hwnd, const GameState& game) {
@@ -39,17 +39,27 @@ namespace Menu {
     );
     SelectObject(hdc, hFontMenu);
 
-    int startY = kMenuStartY;
-    bool startSelected = (game.selectedMenuOption == MenuOption::START);
-    SetTextColor(hdc, startSelected ? RGB(0, 255, 255) : RGB(255, 255, 255));
+    int singleplayerY = kMenuStartY;
+    bool singleplayerSelected = (game.selectedMenuOption == MenuOption::SINGLEPLAYER);
+    SetTextColor(hdc, singleplayerSelected ? RGB(0, 255, 255) : RGB(255, 255, 255));
     
-    std::string startText = "START";
-    SIZE startSize;
-    GetTextExtentPoint32A(hdc, startText.c_str(), static_cast<int>(startText.length()), &startSize);
-    int startX = (Constants::kWindowWidth - startSize.cx) / 2;
-    TextOutA(hdc, startX, startY, startText.c_str(), static_cast<int>(startText.length()));
+    std::string singleplayerText = "SINGLE PLAYER";
+    SIZE singleplayerSize;
+    GetTextExtentPoint32A(hdc, singleplayerText.c_str(), static_cast<int>(singleplayerText.length()), &singleplayerSize);
+    int singleplayerX = (Constants::kWindowWidth - singleplayerSize.cx) / 2;
+    TextOutA(hdc, singleplayerX, singleplayerY, singleplayerText.c_str(), static_cast<int>(singleplayerText.length()));
 
-    int quitY = kMenuStartY + kMenuOptionSpacing;
+    int multiplayerY = kMenuStartY + kMenuOptionSpacing;
+    bool multiplayerSelected = (game.selectedMenuOption == MenuOption::MULTIPLAYER);
+    SetTextColor(hdc, multiplayerSelected ? RGB(0, 255, 255) : RGB(255, 255, 255));
+    
+    std::string multiplayerText = "MULTIPLAYER";
+    SIZE multiplayerSize;
+    GetTextExtentPoint32A(hdc, multiplayerText.c_str(), static_cast<int>(multiplayerText.length()), &multiplayerSize);
+    int multiplayerX = (Constants::kWindowWidth - multiplayerSize.cx) / 2;
+    TextOutA(hdc, multiplayerX, multiplayerY, multiplayerText.c_str(), static_cast<int>(multiplayerText.length()));
+
+    int quitY = kMenuStartY + kMenuOptionSpacing * 2;
     bool quitSelected = (game.selectedMenuOption == MenuOption::QUIT);
     SetTextColor(hdc, quitSelected ? RGB(0, 255, 255) : RGB(255, 255, 255));
     
@@ -80,14 +90,24 @@ namespace Menu {
   }
 
   bool handleClick(int x, int y, GameState& game) {
-    int startY = kMenuStartY;
-    int quitY = kMenuStartY + kMenuOptionSpacing;
+    int singleplayerY = kMenuStartY;
+    int multiplayerY = kMenuStartY + kMenuOptionSpacing;
+    int quitY = kMenuStartY + kMenuOptionSpacing * 2;
     int centerX = Constants::kWindowWidth / 2;
     int halfWidth = kMenuOptionWidth / 2;
 
-    if (y >= startY && y <= startY + kMenuOptionHeight) {
+    if (y >= singleplayerY && y <= singleplayerY + kMenuOptionHeight) {
       if (x >= centerX - halfWidth && x <= centerX + halfWidth) {
         game.mode = GameMode::PLAYING;
+        game.isSinglePlayer = true;
+        return true;
+      }
+    }
+
+    if (y >= multiplayerY && y <= multiplayerY + kMenuOptionHeight) {
+      if (x >= centerX - halfWidth && x <= centerX + halfWidth) {
+        game.mode = GameMode::PLAYING;
+        game.isSinglePlayer = false;
         return true;
       }
     }
@@ -103,21 +123,38 @@ namespace Menu {
 
   void handleKeyDown(WPARAM wParam, GameState& game, HWND hwnd) {
     switch (wParam) {
-      case VK_UP:
-        if (game.selectedMenuOption == MenuOption::QUIT) {
-          game.selectedMenuOption = MenuOption::START;
-          InvalidateRect(hwnd, nullptr, FALSE);
-        }
-        break;
       case VK_DOWN:
-        if (game.selectedMenuOption == MenuOption::START) {
-          game.selectedMenuOption = MenuOption::QUIT;
-          InvalidateRect(hwnd, nullptr, FALSE);
-        }
-        break;
+      if (game.selectedMenuOption == MenuOption::SINGLEPLAYER) {
+        game.selectedMenuOption = MenuOption::MULTIPLAYER;
+        InvalidateRect(hwnd, nullptr, FALSE);
+      } else if (game.selectedMenuOption == MenuOption::MULTIPLAYER) {
+        game.selectedMenuOption = MenuOption::QUIT;
+        InvalidateRect(hwnd, nullptr, FALSE);
+      } else if (game.selectedMenuOption == MenuOption::QUIT) {
+        game.selectedMenuOption = MenuOption::SINGLEPLAYER;
+        InvalidateRect(hwnd, nullptr, FALSE);
+      }
+      break;
+      case VK_UP:
+      if (game.selectedMenuOption == MenuOption::SINGLEPLAYER) {
+        game.selectedMenuOption = MenuOption::QUIT;
+        InvalidateRect(hwnd, nullptr, FALSE);
+      } else if (game.selectedMenuOption == MenuOption::MULTIPLAYER) {
+        game.selectedMenuOption = MenuOption::SINGLEPLAYER;
+        InvalidateRect(hwnd, nullptr, FALSE);
+      } else if (game.selectedMenuOption == MenuOption::QUIT) {
+        game.selectedMenuOption = MenuOption::MULTIPLAYER;
+        InvalidateRect(hwnd, nullptr, FALSE);
+      }
+      break;
       case VK_RETURN:
-        if (game.selectedMenuOption == MenuOption::START) {
+        if (game.selectedMenuOption == MenuOption::MULTIPLAYER) {
           game.mode = GameMode::PLAYING;
+          game.isSinglePlayer = false;
+          InvalidateRect(hwnd, nullptr, FALSE);
+        } else if (game.selectedMenuOption == MenuOption::SINGLEPLAYER) {
+          game.mode = GameMode::PLAYING;
+          game.isSinglePlayer = true;
           InvalidateRect(hwnd, nullptr, FALSE);
         } else if (game.selectedMenuOption == MenuOption::QUIT) {
           PostMessage(hwnd, WM_CLOSE, 0, 0);

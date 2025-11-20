@@ -4,6 +4,7 @@
 #include "renderer.h"
 #include "menu.h"
 #include <algorithm>
+#include <cstdlib>
 
 namespace Window {
   static GameState* g_gameState = nullptr;
@@ -50,6 +51,18 @@ namespace Window {
           Menu::handleKeyDown(wParam, *g_gameState, hwnd);
           
           if (g_gameState->mode == GameMode::PLAYING) {
+            // Reset game state when starting
+            g_gameState->leftPaddleY = (Constants::kTopOffset + 1 + Constants::kGameHeight - Constants::kBottomOffset - Constants::kPaddleHeight) / 2;
+            g_gameState->rightPaddleY = (Constants::kTopOffset + 1 + Constants::kGameHeight - Constants::kBottomOffset - Constants::kPaddleHeight) / 2;
+            g_gameState->leftScore = 0;
+            g_gameState->rightScore = 0;
+            g_gameState->paused = false;
+            g_gameState->leftPaddleUp = false;
+            g_gameState->leftPaddleDown = false;
+            g_gameState->rightPaddleUp = false;
+            g_gameState->rightPaddleDown = false;
+            // Reset ball with random direction
+            GameLogic::resetBall(*g_gameState, (rand() % 2 == 0) ? -1 : 1);
             SetTimer(hwnd, *g_timerId, g_gameState->frameDelayMs, nullptr);
           }
         } else {
@@ -63,10 +76,16 @@ namespace Window {
               g_gameState->leftPaddleDown = true;
               break;
             case VK_UP:
-              g_gameState->rightPaddleUp = true;
+              // Só processa input do paddle direito se não for single-player
+              if (!g_gameState->isSinglePlayer) {
+                g_gameState->rightPaddleUp = true;
+              }
               break;
             case VK_DOWN:
-              g_gameState->rightPaddleDown = true;
+              // Só processa input do paddle direito se não for single-player
+              if (!g_gameState->isSinglePlayer) {
+                g_gameState->rightPaddleDown = true;
+              }
               break;
             case 'P':
             case 'p':
@@ -88,6 +107,11 @@ namespace Window {
             case VK_ESCAPE:
               KillTimer(hwnd, *g_timerId);
               g_gameState->mode = GameMode::MENU;
+              // Reset paddle states when returning to menu
+              g_gameState->leftPaddleUp = false;
+              g_gameState->leftPaddleDown = false;
+              g_gameState->rightPaddleUp = false;
+              g_gameState->rightPaddleDown = false;
               InvalidateRect(hwnd, nullptr, FALSE);
               break;
           }
@@ -106,10 +130,16 @@ namespace Window {
               g_gameState->leftPaddleDown = false;
               break;
             case VK_UP:
-              g_gameState->rightPaddleUp = false;
+              // Só processa input do paddle direito se não for single-player
+              if (!g_gameState->isSinglePlayer) {
+                g_gameState->rightPaddleUp = false;
+              }
               break;
             case VK_DOWN:
-              g_gameState->rightPaddleDown = false;
+              // Só processa input do paddle direito se não for single-player
+              if (!g_gameState->isSinglePlayer) {
+                g_gameState->rightPaddleDown = false;
+              }
               break;
           }
         }
@@ -123,6 +153,18 @@ namespace Window {
             PostMessage(hwnd, WM_CLOSE, 0, 0);
           } else {
             if (g_gameState->mode == GameMode::PLAYING) {
+              // Reset game state when starting
+              g_gameState->leftPaddleY = (Constants::kTopOffset + 1 + Constants::kGameHeight - Constants::kBottomOffset - Constants::kPaddleHeight) / 2;
+              g_gameState->rightPaddleY = (Constants::kTopOffset + 1 + Constants::kGameHeight - Constants::kBottomOffset - Constants::kPaddleHeight) / 2;
+              g_gameState->leftScore = 0;
+              g_gameState->rightScore = 0;
+              g_gameState->paused = false;
+              g_gameState->leftPaddleUp = false;
+              g_gameState->leftPaddleDown = false;
+              g_gameState->rightPaddleUp = false;
+              g_gameState->rightPaddleDown = false;
+              // Reset ball with random direction
+              GameLogic::resetBall(*g_gameState, (rand() % 2 == 0) ? -1 : 1);
               SetTimer(hwnd, *g_timerId, g_gameState->frameDelayMs, nullptr);
             }
             InvalidateRect(hwnd, nullptr, FALSE);

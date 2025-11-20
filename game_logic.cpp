@@ -1,6 +1,7 @@
 #include "game_logic.h"
 #include "constants.h"
 #include "audio.h"
+#include "ai.h"
 #include <algorithm>
 #include <cstdlib>
 
@@ -20,8 +21,17 @@ namespace GameLogic {
   void updateGame(GameState& game) {
     if (game.paused) return;
 
+    // Controle do paddle esquerdo (sempre pelo jogador)
     if (game.leftPaddleUp) game.leftPaddleY -= 1;
     if (game.leftPaddleDown) game.leftPaddleY += 1;
+    
+    // Controle do paddle direito
+    if (game.isSinglePlayer) {
+      // Modo single-player: AI controla o paddle direito
+      AI::updatePaddle(game);
+    }
+    
+    // Movimento do paddle direito (controlado por AI ou jogador)
     if (game.rightPaddleUp) game.rightPaddleY -= 1;
     if (game.rightPaddleDown) game.rightPaddleY += 1;
 
