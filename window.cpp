@@ -61,6 +61,10 @@ namespace Window {
             g_gameState->leftPaddleDown = false;
             g_gameState->rightPaddleUp = false;
             g_gameState->rightPaddleDown = false;
+            // Reset AI state
+            g_gameState->aiConsecutiveHits = 0;
+            g_gameState->aiReactionDelayCounter = 0;
+            g_gameState->aiCurrentReactionDelay = 0;
             // Reset ball with random direction
             GameLogic::resetBall(*g_gameState, (rand() % 2 == 0) ? -1 : 1);
             SetTimer(hwnd, *g_timerId, g_gameState->frameDelayMs, nullptr);
@@ -163,6 +167,10 @@ namespace Window {
               g_gameState->leftPaddleDown = false;
               g_gameState->rightPaddleUp = false;
               g_gameState->rightPaddleDown = false;
+              // Reset AI state
+              g_gameState->aiConsecutiveHits = 0;
+              g_gameState->aiReactionDelayCounter = 0;
+              g_gameState->aiCurrentReactionDelay = 0;
               // Reset ball with random direction
               GameLogic::resetBall(*g_gameState, (rand() % 2 == 0) ? -1 : 1);
               SetTimer(hwnd, *g_timerId, g_gameState->frameDelayMs, nullptr);

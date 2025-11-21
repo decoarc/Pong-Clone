@@ -33,6 +33,11 @@ struct GameState {
   bool leftPaddleDown = false;
   bool rightPaddleUp = false;
   bool rightPaddleDown = false;
+  
+  // AI state tracking
+  int aiConsecutiveHits = 0;
+  int aiReactionDelayCounter = 0;
+  int aiCurrentReactionDelay = 0; // Delay atual sendo usado
 };
 
 #endif

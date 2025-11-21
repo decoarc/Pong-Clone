@@ -16,6 +16,11 @@ namespace GameLogic {
     game.ballY = Constants::kGameHeight / 2;
     game.ballDX = towardDX;
     game.ballDY = (rand() % 2 == 0) ? -1 : 1;
+    // Reset AI reaction delay when ball resets
+    if (game.isSinglePlayer) {
+      game.aiReactionDelayCounter = 0;
+      game.aiCurrentReactionDelay = 0;
+    }
   }
 
   void updateGame(GameState& game) {
@@ -73,6 +78,13 @@ namespace GameLogic {
         if (hitPos < Constants::kPaddleHeight / 2) game.ballDY = -1;
         else if (hitPos > Constants::kPaddleHeight / 2) game.ballDY = 1;
         Audio::playSound(Audio::SoundType::PADDLE_HIT);
+        
+        // Incrementar contador de acertos consecutivos da IA
+        if (game.isSinglePlayer) {
+          game.aiConsecutiveHits++;
+          game.aiReactionDelayCounter = 0; // Reset delay counter on hit
+          game.aiCurrentReactionDelay = 0; // Reset current delay to recalculate
+        }
       }
     }
 
@@ -80,10 +92,22 @@ namespace GameLogic {
       game.rightScore += 1;
       resetBall(game, -1);
       Audio::playSound(Audio::SoundType::SCORE);
+      // Reset AI hit counter when AI scores
+      if (game.isSinglePlayer) {
+        game.aiConsecutiveHits = 0;
+        game.aiReactionDelayCounter = 0;
+        game.aiCurrentReactionDelay = 0;
+      }
     } else if (game.ballX >= Constants::kGameWidth - 1) {
       game.leftScore += 1;
       resetBall(game, 1);
       Audio::playSound(Audio::SoundType::SCORE);
+      // Reset AI hit counter when player scores (AI missed)
+      if (game.isSinglePlayer) {
+        game.aiConsecutiveHits = 0;
+        game.aiReactionDelayCounter = 0;
+        game.aiCurrentReactionDelay = 0;
+      }
     }
   }
 }
