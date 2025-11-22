@@ -2,6 +2,7 @@
 #include "constants.h"
 #include "audio.h"
 #include "ai.h"
+#include "network.h"
 #include <algorithm>
 #include <cstdlib>
 
@@ -45,70 +46,76 @@ namespace GameLogic {
     clamp(game.leftPaddleY, minPaddleY, maxPaddleY);
     clamp(game.rightPaddleY, minPaddleY, maxPaddleY);
 
-    game.ballX += game.ballDX;
-    game.ballY += game.ballDY;
-    if (game.ballY <= Constants::kTopOffset + 1) {
-      game.ballY = Constants::kTopOffset + 1;
-      game.ballDY = 1;
-      Audio::playSound(Audio::SoundType::WALL_HIT);
-    } else if (game.ballY >= Constants::kGameHeight - Constants::kBottomOffset - 2) {
-      game.ballY = Constants::kGameHeight - Constants::kBottomOffset - 2;
-      game.ballDY = -1;
-      Audio::playSound(Audio::SoundType::WALL_HIT);
-    }
+    // NOVO: No modo online como cliente, não processamos física da bola
+    // (recebemos do host)
+    if (!game.isOnlineMultiplayer || Network::getRole() == NetworkRole::HOST) {
+      
 
-    int leftPaddleX = Constants::kPaddleMargin;
-    if (game.ballDX < 0 && game.ballX >= leftPaddleX && game.ballX <= leftPaddleX + 1) {
-      if (game.ballY >= game.leftPaddleY && game.ballY < game.leftPaddleY + Constants::kPaddleHeight) {
-        game.ballDX = 1;
-        game.ballX = leftPaddleX + 1;
-        int hitPos = game.ballY - game.leftPaddleY;
-        if (hitPos < Constants::kPaddleHeight / 2) game.ballDY = -1;
-        else if (hitPos > Constants::kPaddleHeight / 2) game.ballDY = 1;
-        Audio::playSound(Audio::SoundType::PADDLE_HIT);
+      game.ballX += game.ballDX;
+      game.ballY += game.ballDY;
+      if (game.ballY <= Constants::kTopOffset + 1) {
+        game.ballY = Constants::kTopOffset + 1;
+        game.ballDY = 1;
+        Audio::playSound(Audio::SoundType::WALL_HIT);
+      } else if (game.ballY >= Constants::kGameHeight - Constants::kBottomOffset - 2) {
+        game.ballY = Constants::kGameHeight - Constants::kBottomOffset - 2;
+        game.ballDY = -1;
+        Audio::playSound(Audio::SoundType::WALL_HIT);
       }
-    }
 
-    int rightPaddleX = Constants::kGameWidth - 1 - Constants::kRightPaddleMargin;
-    if (game.ballDX > 0 && game.ballX >= rightPaddleX - 1 && game.ballX <= rightPaddleX) {
-      if (game.ballY >= game.rightPaddleY && game.ballY < game.rightPaddleY + Constants::kPaddleHeight) {
-        game.ballDX = -1;
-        game.ballX = rightPaddleX - 1;
-        int hitPos = game.ballY - game.rightPaddleY;
-        if (hitPos < Constants::kPaddleHeight / 2) game.ballDY = -1;
-        else if (hitPos > Constants::kPaddleHeight / 2) game.ballDY = 1;
-        Audio::playSound(Audio::SoundType::PADDLE_HIT);
-        
-        // Incrementar contador de acertos consecutivos da IA
+      int leftPaddleX = Constants::kPaddleMargin;
+      if (game.ballDX < 0 && game.ballX >= leftPaddleX && game.ballX <= leftPaddleX + 1) {
+        if (game.ballY >= game.leftPaddleY && game.ballY < game.leftPaddleY + Constants::kPaddleHeight) {
+          game.ballDX = 1;
+          game.ballX = leftPaddleX + 1;
+          int hitPos = game.ballY - game.leftPaddleY;
+          if (hitPos < Constants::kPaddleHeight / 2) game.ballDY = -1;
+          else if (hitPos > Constants::kPaddleHeight / 2) game.ballDY = 1;
+          Audio::playSound(Audio::SoundType::PADDLE_HIT);
+        }
+      }
+
+      int rightPaddleX = Constants::kGameWidth - 1 - Constants::kRightPaddleMargin;
+      if (game.ballDX > 0 && game.ballX >= rightPaddleX - 1 && game.ballX <= rightPaddleX) {
+        if (game.ballY >= game.rightPaddleY && game.ballY < game.rightPaddleY + Constants::kPaddleHeight) {
+          game.ballDX = -1;
+          game.ballX = rightPaddleX - 1;
+          int hitPos = game.ballY - game.rightPaddleY;
+          if (hitPos < Constants::kPaddleHeight / 2) game.ballDY = -1;
+          else if (hitPos > Constants::kPaddleHeight / 2) game.ballDY = 1;
+          Audio::playSound(Audio::SoundType::PADDLE_HIT);
+          
+          // Incrementar contador de acertos consecutivos da IA
+          if (game.isSinglePlayer) {
+            game.aiConsecutiveHits++;
+            game.aiReactionDelayCounter = 0; // Reset delay counter on hit
+            game.aiCurrentReactionDelay = 0; // Reset current delay to recalculate
+          }
+        }
+      }
+
+      if (game.ballX <= 0) {
+        game.rightScore += 1;
+        resetBall(game, -1);
+        Audio::playSound(Audio::SoundType::SCORE);
+        // Reset AI hit counter when AI scores
         if (game.isSinglePlayer) {
-          game.aiConsecutiveHits++;
-          game.aiReactionDelayCounter = 0; // Reset delay counter on hit
-          game.aiCurrentReactionDelay = 0; // Reset current delay to recalculate
+          game.aiConsecutiveHits = 0;
+          game.aiReactionDelayCounter = 0;
+          game.aiCurrentReactionDelay = 0;
+        }
+      } else if (game.ballX >= Constants::kGameWidth - 1) {
+        game.leftScore += 1;
+        resetBall(game, 1);
+        Audio::playSound(Audio::SoundType::SCORE);
+        // Reset AI hit counter when player scores (AI missed)
+        if (game.isSinglePlayer) {
+          game.aiConsecutiveHits = 0;
+          game.aiReactionDelayCounter = 0;
+          game.aiCurrentReactionDelay = 0;
         }
       }
     }
-
-    if (game.ballX <= 0) {
-      game.rightScore += 1;
-      resetBall(game, -1);
-      Audio::playSound(Audio::SoundType::SCORE);
-      // Reset AI hit counter when AI scores
-      if (game.isSinglePlayer) {
-        game.aiConsecutiveHits = 0;
-        game.aiReactionDelayCounter = 0;
-        game.aiCurrentReactionDelay = 0;
-      }
-    } else if (game.ballX >= Constants::kGameWidth - 1) {
-      game.leftScore += 1;
-      resetBall(game, 1);
-      Audio::playSound(Audio::SoundType::SCORE);
-      // Reset AI hit counter when player scores (AI missed)
-      if (game.isSinglePlayer) {
-        game.aiConsecutiveHits = 0;
-        game.aiReactionDelayCounter = 0;
-        game.aiCurrentReactionDelay = 0;
-      }
-    }
-  }
+  }    
 }
 

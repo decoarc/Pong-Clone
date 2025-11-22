@@ -95,7 +95,7 @@ namespace Renderer {
   }
 
   void draw(HDC hdc, HWND hwnd, const GameState& game) {
-    if (game.mode == GameMode::MENU) {
+    if (game.mode == GameMode::MENU || game.mode == GameMode::HOST_WAITING || game.mode == GameMode::CLIENT_CONNECTING) {
       Menu::drawMenu(hdc, hwnd, game);
     } else {
       drawGame(hdc, hwnd, game);
