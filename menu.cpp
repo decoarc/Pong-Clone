@@ -154,9 +154,20 @@ namespace Menu {
       
       std::string displayText = "";
       if (game.mode == GameMode::HOST_WAITING) {
-        // Mostrar IP do host
+        // Mostrar IP do host sem pontos e dois pontos (número corrido)
         std::string ip = Network::getHostIP();
-        displayText = ip + ":" + std::to_string(game.networkPort);
+        std::string portStr = std::to_string(game.networkPort);
+        
+        // Remover pontos do IP
+        std::string ipClean = "";
+        for (char c : ip) {
+          if (c != '.') {
+            ipClean += c;
+          }
+        }
+        
+        // Juntar IP e porta sem dois pontos
+        displayText = ipClean + portStr;
       } else {
         // Modo CLIENT_CONNECTING - campo de entrada
         displayText = game.hostIPInput.empty() ? "Digite o IP aqui..." : game.hostIPInput;
@@ -196,7 +207,7 @@ namespace Menu {
       if (game.mode == GameMode::HOST_WAITING) {
         instruction = "Aguardando cliente conectar... Pressione ESC para voltar";
       } else {
-        instruction = "Digite o IP do host e pressione Enter (ex: 192.168.1.100 ou 127.0.0.1)";
+        instruction = "Digite o IP (ex: 19216811007777) e pressione Enter";
       }
       
       SIZE instSize;
@@ -308,16 +319,101 @@ namespace Menu {
         }
       } else if (c == '\r' || c == '\n') { // Enter
         if (!game.hostIPInput.empty()) {
-          if (Network::connectToHost(game.hostIPInput, game.networkPort)) {
+          std::string ipAddress = game.hostIPInput;
+          int port = game.networkPort; // Porta padrão
+          
+          // Verificar se é número corrido (só dígitos, sem pontos)
+          bool isNumberOnly = true;
+          for (char ch : ipAddress) {
+            if (ch < '0' || ch > '9') {
+              isNumberOnly = false;
+              break;
+            }
+          }
+          
+          if (isNumberOnly && ipAddress.length() >= 8) {
+            // É número corrido - converter de volta para IP:porta
+            // Assumir últimos 4 dígitos são a porta (ex: 7777)
+            if (ipAddress.length() >= 4) {
+              std::string portStr = ipAddress.substr(ipAddress.length() - 4);
+              try {
+                port = std::stoi(portStr);
+                ipAddress = ipAddress.substr(0, ipAddress.length() - 4);
+              } catch (...) {
+                // Se falhar, usar porta padrão
+                port = game.networkPort;
+              }
+            }
+            
+            // Converter número corrido para formato IP com pontos
+            // Ex: 1921681100 -> 192.168.1.100
+            // Formato esperado: 3-3-1-3 dígitos (192.168.1.100)
+            if (ipAddress.length() >= 7) {
+              std::string formattedIP = "";
+              int len = ipAddress.length();
+              
+              // Tentar dividir no formato mais comum: 3-3-1-3
+              // Mas também suportar outros formatos
+              if (len >= 3) {
+                formattedIP += ipAddress.substr(0, 3); // Primeiro octeto (ex: 192)
+                if (len > 3) {
+                  formattedIP += ".";
+                  if (len >= 6) {
+                    formattedIP += ipAddress.substr(3, 3); // Segundo octeto (ex: 168)
+                    if (len > 6) {
+                      formattedIP += ".";
+                      // Resto: pode ser 1-3, 2-2, 3-1, etc.
+                      int remaining = len - 6;
+                      if (remaining == 1) {
+                        // Ex: 1921681 -> 192.168.1
+                        formattedIP += ipAddress.substr(6, 1);
+                      } else if (remaining == 2) {
+                        // Ex: 19216810 -> 192.168.1.0
+                        formattedIP += ipAddress.substr(6, 1);
+                        formattedIP += ".";
+                        formattedIP += ipAddress.substr(7, 1);
+                      } else if (remaining == 3) {
+                        // Ex: 192168100 -> 192.168.1.00 ou 192.168.100
+                        // Assumir formato 1-2 (mais comum)
+                        formattedIP += ipAddress.substr(6, 1);
+                        formattedIP += ".";
+                        formattedIP += ipAddress.substr(7, 2);
+                      } else if (remaining == 4) {
+                        // Ex: 1921681100 -> 192.168.1.100
+                        formattedIP += ipAddress.substr(6, 1);
+                        formattedIP += ".";
+                        formattedIP += ipAddress.substr(7, 3);
+                      } else {
+                        // Para casos maiores, dividir de forma mais genérica
+                        formattedIP += ipAddress.substr(6, 1);
+                        formattedIP += ".";
+                        formattedIP += ipAddress.substr(7);
+                      }
+                    }
+                  } else {
+                    formattedIP += ipAddress.substr(3); // Resto
+                  }
+                }
+              } else {
+                formattedIP = ipAddress;
+              }
+              
+              ipAddress = formattedIP;
+            }
+          }
+          
+          // Tentar conectar
+          if (Network::connectToHost(ipAddress, port)) {
             game.mode = GameMode::PLAYING;
             game.isOnlineMultiplayer = true;
             game.isSinglePlayer = false;
             game.connectionStatus = "Connected!";
           } else {
-            game.connectionStatus = "Failed to connect to " + game.hostIPInput;
+            game.connectionStatus = "Failed to connect to " + ipAddress;
           }
         }
-      } else if ((c >= '0' && c <= '9') || c == '.') {
+      } else if (c >= '0' && c <= '9') {
+        // Aceitar apenas dígitos (não aceitar mais pontos)
         game.hostIPInput += c;
       }
     }
