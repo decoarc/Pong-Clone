@@ -27,6 +27,7 @@ struct GameState {
 
   int networkPort = 7777;
   std::string hostIPInput = "";
+  std::string hostIPDisplay = "";  // IP formatado para exibição no host
   std::string connectionStatus = "";
   
   int leftPaddleY = (Constants::kTopOffset + 1 + Constants::kGameHeight - Constants::kBottomOffset - Constants::kPaddleHeight) / 2;
